@@ -17,19 +17,22 @@ namespace KinoDev.EmailService.WebApi
             || messageBrokerSettings == null)
             {
                 throw new ArgumentNullException("Config settings are not configured.");
-            }
-
+            }            
+            
             builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
             builder.Services.Configure<MessageBrokerSettings>(builder.Configuration.GetSection("MessageBroker"));
+            builder.Services.Configure<MailgunSettings>(builder.Configuration.GetSection("Mailgun"));
 
             // Add services to the container.
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
-
+            builder.Services.AddSwaggerGen();            
             builder.Services.AddSingleton<IMessageBrokerService, RabbitMQService>();
+            
+            // Register the EmailSenderService
+            builder.Services.AddSingleton<IEmailSenderService, MailgunEmailSenderService>();
 
             builder.Services.AddHostedService<MessagingSubscriber>();
 
