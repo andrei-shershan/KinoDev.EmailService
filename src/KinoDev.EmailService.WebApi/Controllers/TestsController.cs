@@ -6,7 +6,7 @@ namespace KinoDev.EmailService.WebApi.Controllers
     [ApiController]
     public class TestsController : ControllerBase
     {
-        [HttpGet()]
+        [HttpGet("")]
         public IActionResult Get()
         {
             return Ok("Hello from TestsController");
