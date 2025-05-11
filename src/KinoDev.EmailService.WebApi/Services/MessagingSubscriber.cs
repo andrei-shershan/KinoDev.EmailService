@@ -1,6 +1,8 @@
 using KinoDev.EmailService.WebApi.Models;
+using KinoDev.Shared.DtoModels.Orders;
 using KinoDev.Shared.Services;
 using Microsoft.Extensions.Options;
+using System.Text;
 using System.Text.Json;
 
 namespace KinoDev.EmailService.WebApi.Services
@@ -34,38 +36,54 @@ namespace KinoDev.EmailService.WebApi.Services
                 try
                 {
                     _logger.LogInformation("Received order completed message: {Message}", message);
-                    
+
                     // Parse the message (this would depend on your actual message format)
                     // For example, assuming it's a JSON string with 'email', 'orderId', etc.
-                    var orderData = JsonSerializer.Deserialize<OrderCompletedMessage>(message);
-                    
+                    var orderData = JsonSerializer.Deserialize<OrderSummary>(message);
+
                     if (orderData != null && !string.IsNullOrEmpty(orderData.Email))
                     {
                         // Prepare email content
-                        var subject = $"Your order #{orderData.OrderId} has been completed";
+                        var subject = $"Your order #{orderData.Id} has been completed";
+
+                        var strBuilder = new StringBuilder();
+                        foreach (var ticket in orderData.Tickets)
+                        {
+                            strBuilder.AppendLine($"<p>row: {ticket.Row}, number: {ticket.Number}</p>");
+                        }
+                        var seats = strBuilder.ToString();
+
                         var body = $@"
                             <h1>Order Completed</h1>
-                            <p>Dear {orderData.CustomerName},</p>
-                            <p>We're pleased to inform you that your order #{orderData.OrderId} has been completed.</p>
+                            <p>Dear {orderData.Email},</p>
+                            <p>We're pleased to inform you that your order #{orderData.Id} has been completed.</p>
+                            <p>Order Details:</p>
+                            <p>{orderData.ShowTimeSummary.Movie.Name}</p>
+                            <p>{orderData.ShowTimeSummary.Hall.Name}</p>
+                            <p>{orderData.ShowTimeSummary.Time.ToString()}</p>
+                            <p>Total cost: <strong>{orderData.Cost}</strong></p>"
+
+                            + seats
+
+                            + $@"
                             <p>Thank you for choosing our service!</p>
                             <p>Regards,<br>KinoDev Team</p>
-                        ";
-                        
+                            ";
+
                         // Send the email
                         var result = await _emailSenderService.SendAsync(orderData.Email, subject, body);
-                        
+
                         if (result)
                         {
-                            _logger.LogInformation("Order completion email sent to {Email} for order {OrderId}", 
-                                orderData.Email, orderData.OrderId);
-                            
-                            // Publish an event that the email was sent
-                            // (if needed)
+                            await _messageBrokerService.PublishAsync(
+                                orderData.Id.ToString(),
+                                _messageBrokerSettings.Topics.EmailSent
+                                );
                         }
                         else
                         {
-                            _logger.LogError("Failed to send order completion email to {Email} for order {OrderId}", 
-                                orderData.Email, orderData.OrderId);
+                            _logger.LogError("Failed to send order completion email to {Email} for order {OrderId}",
+                                orderData.Email, orderData.Id);
                         }
                     }
                     else
@@ -79,14 +97,5 @@ namespace KinoDev.EmailService.WebApi.Services
                 }
             });
         }
-    }
-
-    // Sample message model - adjust according to your actual data structure
-    public class OrderCompletedMessage
-    {
-        public string OrderId { get; set; } = string.Empty;
-        public string CustomerName { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
-        // Add other fields as needed
     }
 }
