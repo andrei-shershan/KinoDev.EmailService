@@ -9,7 +9,7 @@
   <ItemGroup>
     <PackageReference Include="RestSharp" Version="112.1.0" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.4.0" />
-    <PackageReference Include="KinoDev.Shared" Version="1.14.0" />
+    <PackageReference Include="KinoDev.Shared" Version="1.18.0" />
   </ItemGroup>
 
 </Project>

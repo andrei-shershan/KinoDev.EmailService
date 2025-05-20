@@ -12,6 +12,6 @@ namespace KinoDev.EmailService.WebApi.Services
         /// <param name="body">Email body content (can be HTML)</param>
         /// <param name="isHtml">Indicates if the body content is HTML</param>
         /// <returns>A task that represents the asynchronous operation</returns>
-        Task<bool> SendAsync(string to, string subject, string body, bool isHtml = true);
+        Task<bool> SendAsync(string to, string subject, string body, bool isHtml = true, string attachmentUrl = null);
     }
 }

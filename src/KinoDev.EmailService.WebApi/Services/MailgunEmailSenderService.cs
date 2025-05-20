@@ -22,32 +22,45 @@ namespace KinoDev.EmailService.WebApi.Services
             _logger = logger;
         }
 
-        public async Task<bool> SendAsync(string to, string subject, string body, bool isHtml = true)
+        public async Task<bool> SendAsync(string to, string subject, string body, bool isHtml = true, string attachmentUrl = null)
         {
             try
             {
-                var baseUrl = _mailgunSettings.Region.ToUpper() == "EU" 
-                    ? "https://api.eu.mailgun.net/v3" 
-                    : "https://api.mailgun.net/v3";
-                
+                var baseUrl = _mailgunSettings.BaseUrl;
+
                 // Create RestClient with Mailgun API base URL and authentication
                 var options = new RestClientOptions(baseUrl)
                 {
                     Authenticator = new HttpBasicAuthenticator("api", _mailgunSettings.ApiKey)
                 };
-                
+
                 var client = new RestClient(options);
-                
+
                 // Create request
                 var request = new RestRequest($"{_mailgunSettings.Domain}/messages");
-                
+
                 // Add required parameters
                 request.AddParameter("from", $"{_mailgunSettings.FromName} <{_mailgunSettings.FromEmail}>");
                 request.AddParameter("to", to);
                 request.AddParameter("subject", subject);
-                
+
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(attachmentUrl))
+                    {
+                        var httpClient = new HttpClient();
+                        var pdfBytes = await httpClient.GetByteArrayAsync(attachmentUrl);
+
+                        request.AddFile("attachment", pdfBytes, attachmentUrl.Split('/').Last(), "application/pdf");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error occurred while downloading the attachment from {AttachmentUrl}", attachmentUrl);
+                }
+
                 // Add either HTML or text based on the isHtml flag
-                if (isHtml)
+                    if (isHtml)
                 {
                     request.AddParameter("html", body);
                 }
@@ -55,20 +68,20 @@ namespace KinoDev.EmailService.WebApi.Services
                 {
                     request.AddParameter("text", body);
                 }
-                
+
                 // Execute the request
                 var response = await client.ExecutePostAsync(request);
-                
+
                 // Log the result and return success/failure
                 if (response.IsSuccessful)
                 {
-                    _logger.LogInformation("Email sent successfully to {Recipient}. Response: {Response}", 
+                    _logger.LogInformation("Email sent successfully to {Recipient}. Response: {Response}",
                         to, response.Content);
                     return true;
                 }
                 else
                 {
-                    _logger.LogError("Failed to send email to {Recipient}. Status: {Status}, Response: {Response}", 
+                    _logger.LogError("Failed to send email to {Recipient}. Status: {Status}, Response: {Response}",
                         to, response.StatusCode, response.Content);
                     return false;
                 }

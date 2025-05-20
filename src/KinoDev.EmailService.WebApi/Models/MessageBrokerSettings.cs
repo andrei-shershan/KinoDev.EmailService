@@ -9,12 +9,15 @@ namespace KinoDev.EmailService.WebApi.Models
 
     public class Topics
     {
-        public string OrderCompleted { get; set; }
+        public string OrderFileCreated { get; set; }
+        public string OrderFileUrlAdded { get; set; }
+
         public string EmailSent { get; set; }
     }
 
     public class Queues
     {
-        public string EmailServiceOrderCompleted { get; set; }
+        public string OrderFileUrlAdded { get; set; }
+        public string OrderFileCreated { get; set; }
     }
 }
