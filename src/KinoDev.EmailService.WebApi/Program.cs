@@ -17,11 +17,18 @@ namespace KinoDev.EmailService.WebApi
             || messageBrokerSettings == null)
             {
                 throw new ArgumentNullException("Config settings are not configured.");
-            }            
+            }       
+
+            var azureStorageSettings = builder.Configuration.GetSection("AzureStorage").Get<AzureStorageSettigns>();
+            if (azureStorageSettings == null)
+            {
+                throw new ArgumentNullException("Azure Storage settings are not configured.");
+            }     
             
             builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
             builder.Services.Configure<MessageBrokerSettings>(builder.Configuration.GetSection("MessageBroker"));
             builder.Services.Configure<MailgunSettings>(builder.Configuration.GetSection("Mailgun"));
+            builder.Services.Configure<AzureStorageSettigns>(builder.Configuration.GetSection("AzureStorage"));
 
             // Add services to the container.
 
@@ -33,6 +40,7 @@ namespace KinoDev.EmailService.WebApi
             
             // Register the EmailSenderService
             builder.Services.AddSingleton<IEmailSenderService, MailgunEmailSenderService>();
+            builder.Services.AddTransient<IEmailGenerator, EmailGenerator>();
 
             builder.Services.AddHostedService<MessagingSubscriber>();
 
