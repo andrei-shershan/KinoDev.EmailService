@@ -52,7 +52,7 @@ namespace KinoDev.EmailService.WebApi.Services
                 }
 
                 // Add either HTML or text based on the isHtml flag
-                request.AddParameter(isHtml ? "html" : "text", subject);
+                request.AddParameter(isHtml ? "html" : "text", body);
 
                 // Execute the request
                 var response = await client.ExecutePostAsync(request);
