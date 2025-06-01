@@ -1,16 +1,12 @@
 using System.Text;
 using KinoDev.EmailService.WebApi.Models;
+using KinoDev.EmailService.WebApi.Services.Abstractions;
 using KinoDev.Shared.DtoModels.Orders;
 using KinoDev.Shared.Services;
 using Microsoft.Extensions.Options;
 
 namespace KinoDev.EmailService.WebApi.Services
 {
-    public interface IEmailGenerator
-    {
-        Task GenerateOrderCompletedEmail(OrderSummary orderSummary);
-    }
-
     public class EmailGenerator : IEmailGenerator
     {
         private readonly IMessageBrokerService _messageBrokerService;
@@ -36,20 +32,19 @@ namespace KinoDev.EmailService.WebApi.Services
 
         public async Task GenerateOrderCompletedEmail(OrderSummary orderSummary)
         {
-            // Prepare email content
-            var subject = $"Your order #{orderSummary.Id} has been completed";
+            var subject = $"Your order has been completed!";
 
             var strBuilder = new StringBuilder();
-            foreach (var ticket in orderSummary.Tickets)
+            foreach (var ticket in orderSummary.Tickets.OrderBy(t => t.Row).ThenBy(t => t.Number))
             {
                 strBuilder.AppendLine($"<p>row: {ticket.Row}, number: {ticket.Number}</p>");
             }
             var seats = strBuilder.ToString();
 
             var body = $@"
-                            <h1>Order Completed</h1>
+                            <h1>Your order is completed!</h1>
                             <p>Dear {orderSummary.Email},</p>
-                            <p>We're pleased to inform you that your order #{orderSummary.Id} has been completed.</p>
+                            <p>We're pleased to inform you that your order has been completed.</p>
                             <p>Order Details:</p>
                             <p>{orderSummary.ShowTimeSummary.Movie.Name}</p>
                             <p>{orderSummary.ShowTimeSummary.Hall.Name}</p>
@@ -59,15 +54,22 @@ namespace KinoDev.EmailService.WebApi.Services
                 + seats
 
                 + $@"
+                            <p>You can find your order details in the attached file.</p>
                             <p>Thank you for choosing our service!</p>
                             <p>Regards,<br>KinoDev Team</p>
                             ";
 
-            // Send the email
             var attachmentUrl = $"{_azureStorageSettigns.BaseUrl}/{_azureStorageSettigns.StorageAccount}/{orderSummary.FileUrl}";
+
             var result = await _emailSenderService.SendAsync(orderSummary.Email, subject, body, attachmentUrl: attachmentUrl);
             if (result)
             {
+                if (string.IsNullOrWhiteSpace(_messageBrokerSettings?.Topics?.EmailSent))
+                {
+                    _logger.LogError("EmailSent topic is not configured in MessageBrokerSettings.");
+                    return;
+                }
+
                 await _messageBrokerService.PublishAsync(
                     orderSummary,
                     _messageBrokerSettings.Topics.EmailSent

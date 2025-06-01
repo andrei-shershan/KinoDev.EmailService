@@ -1,5 +1,6 @@
 using KinoDev.EmailService.WebApi.Models;
 using KinoDev.EmailService.WebApi.Services;
+using KinoDev.EmailService.WebApi.Services.Abstractions;
 using KinoDev.Shared.Models;
 using KinoDev.Shared.Services;
 
@@ -11,56 +12,64 @@ namespace KinoDev.EmailService.WebApi
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            var rabbitMqSettings = builder.Configuration.GetSection("RabbitMq").Get<RabbitMqSettings>();
-            var messageBrokerSettings = builder.Configuration.GetSection("MessageBroker").Get<MessageBrokerSettings>();
-            if (rabbitMqSettings == null
-            || messageBrokerSettings == null)
-            {
-                throw new ArgumentNullException("Config settings are not configured.");
-            }       
-
-            var azureStorageSettings = builder.Configuration.GetSection("AzureStorage").Get<AzureStorageSettigns>();
-            if (azureStorageSettings == null)
-            {
-                throw new ArgumentNullException("Azure Storage settings are not configured.");
-            }     
-            
-            builder.Services.Configure<RabbitMqSettings>(builder.Configuration.GetSection("RabbitMq"));
-            builder.Services.Configure<MessageBrokerSettings>(builder.Configuration.GetSection("MessageBroker"));
-            builder.Services.Configure<MailgunSettings>(builder.Configuration.GetSection("Mailgun"));
-            builder.Services.Configure<AzureStorageSettigns>(builder.Configuration.GetSection("AzureStorage"));
-
-            // Add services to the container.
+            ConfigureSettings(builder);
 
             builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();            
+            builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton<IMessageBrokerService, RabbitMQService>();
-            
-            // Register the EmailSenderService
+
             builder.Services.AddSingleton<IEmailSenderService, MailgunEmailSenderService>();
             builder.Services.AddTransient<IEmailGenerator, EmailGenerator>();
 
             builder.Services.AddHostedService<MessagingSubscriber>();
 
+            builder.Services.AddHealthChecks();        
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            //app.UseHttpsRedirection();
+            var disableHttpsRedirection = builder.Configuration.GetValue<bool>("DisableHttpsRedirection");
+            if (!disableHttpsRedirection)
+            {
+                app.UseHttpsRedirection();
+            }
 
             app.UseAuthorization();
 
             app.MapControllers();
 
             app.Run();
+        }        
+
+        private static void ConfigureSettings(WebApplicationBuilder builder)
+        {
+            var rabbitMqSection = builder.Configuration.GetSection("RabbitMq");
+            var messageBrokerSection = builder.Configuration.GetSection("MessageBroker");
+            var azureStorageSection = builder.Configuration.GetSection("AzureStorage");
+            var mailgunSection = builder.Configuration.GetSection("Mailgun");
+
+            var rabbitMqSettings = rabbitMqSection.Get<RabbitMqSettings>();
+            var messageBrokerSettings = messageBrokerSection.Get<MessageBrokerSettings>();
+            var azureStorageSettings = azureStorageSection.Get<AzureStorageSettigns>();
+            if (
+                rabbitMqSettings == null
+                || messageBrokerSettings == null
+                || azureStorageSettings == null
+            )
+            {
+                throw new ArgumentNullException("Configuration settings are not properly configured.");
+            }
+
+            builder.Services.Configure<RabbitMqSettings>(rabbitMqSection);
+            builder.Services.Configure<MessageBrokerSettings>(messageBrokerSection);
+            builder.Services.Configure<MailgunSettings>(mailgunSection);
+            builder.Services.Configure<AzureStorageSettigns>(azureStorageSection);
         }
     }
 }
