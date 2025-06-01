@@ -1,5 +1,6 @@
 using KinoDev.EmailService.WebApi.Models;
 using KinoDev.EmailService.WebApi.Services;
+using KinoDev.EmailService.WebApi.Services.Abstractions;
 using KinoDev.Shared.Models;
 using KinoDev.Shared.Services;
 
