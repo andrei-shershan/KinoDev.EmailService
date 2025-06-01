@@ -54,11 +54,8 @@ namespace KinoDev.EmailService.WebApi.Services
                 + seats
 
                 + $@"
-                            <br />
                             <p>You can find your order details in the attached file.</p>
-                            <br />
                             <p>Thank you for choosing our service!</p>
-                            <br />
                             <p>Regards,<br>KinoDev Team</p>
                             ";
 
