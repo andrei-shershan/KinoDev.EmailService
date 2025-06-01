@@ -28,6 +28,13 @@ namespace KinoDev.EmailService.WebApi.Services
 
         protected override Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            if (string.IsNullOrWhiteSpace(_messageBrokerSettings.Topics?.OrderFileUrlAdded) ||
+               string.IsNullOrWhiteSpace(_messageBrokerSettings.Queues?.OrderFileUrlAdded))
+            {
+                _logger.LogError("OrderFileUrlAdded topic or queue is not configured properly.");
+                return Task.CompletedTask;
+            }
+
             return _messageBrokerService.SubscribeAsync(
                 _messageBrokerSettings.Topics.OrderFileUrlAdded,
                 _messageBrokerSettings.Queues.OrderFileUrlAdded,

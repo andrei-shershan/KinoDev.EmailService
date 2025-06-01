@@ -19,7 +19,7 @@ namespace KinoDev.EmailService.WebApi.Services
             _logger = logger;
         }
 
-        public async Task<bool> SendAsync(string to, string subject, string body, bool isHtml = true, string attachmentUrl = null)
+        public async Task<bool> SendAsync(string to, string subject, string body, bool isHtml = true, string? attachmentUrl = null)
         {
             try
             {
