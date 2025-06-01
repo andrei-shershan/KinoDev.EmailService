@@ -24,7 +24,7 @@ namespace KinoDev.EmailService.WebApi
 
             builder.Services.AddHostedService<MessagingSubscriber>();
 
-            builder.Services.AddHealthChecks();        
+            builder.Services.AddHealthChecks();
 
             var app = builder.Build();
 
