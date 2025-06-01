@@ -1,8 +1,5 @@
-using System;
-using System.Net;
-using System.Threading.Tasks;
 using KinoDev.EmailService.WebApi.Models;
-using Microsoft.Extensions.Logging;
+using KinoDev.EmailService.WebApi.Services.Abstractions;
 using Microsoft.Extensions.Options;
 using RestSharp;
 using RestSharp.Authenticators;
@@ -26,17 +23,12 @@ namespace KinoDev.EmailService.WebApi.Services
         {
             try
             {
-                var baseUrl = _mailgunSettings.BaseUrl;
-
-                // Create RestClient with Mailgun API base URL and authentication
-                var options = new RestClientOptions(baseUrl)
+                var options = new RestClientOptions(_mailgunSettings.BaseUrl)
                 {
                     Authenticator = new HttpBasicAuthenticator("api", _mailgunSettings.ApiKey)
                 };
 
                 var client = new RestClient(options);
-
-                // Create request
                 var request = new RestRequest($"{_mailgunSettings.Domain}/messages");
 
                 // Add required parameters
@@ -60,19 +52,10 @@ namespace KinoDev.EmailService.WebApi.Services
                 }
 
                 // Add either HTML or text based on the isHtml flag
-                    if (isHtml)
-                {
-                    request.AddParameter("html", body);
-                }
-                else
-                {
-                    request.AddParameter("text", body);
-                }
+                request.AddParameter(isHtml ? "html" : "text", subject);
 
                 // Execute the request
                 var response = await client.ExecutePostAsync(request);
-
-                // Log the result and return success/failure
                 if (response.IsSuccessful)
                 {
                     _logger.LogInformation("Email sent successfully to {Recipient}. Response: {Response}",
@@ -83,14 +66,14 @@ namespace KinoDev.EmailService.WebApi.Services
                 {
                     _logger.LogError("Failed to send email to {Recipient}. Status: {Status}, Response: {Response}",
                         to, response.StatusCode, response.Content);
-                    return false;
                 }
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error occurred while sending email to {Recipient}", to);
-                return false;
             }
+
+            return false;
         }
     }
 }

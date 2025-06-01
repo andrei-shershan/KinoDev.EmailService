@@ -1,6 +1,4 @@
-using System.Threading.Tasks;
-
-namespace KinoDev.EmailService.WebApi.Services
+namespace KinoDev.EmailService.WebApi.Services.Abstractions
 {
     public interface IEmailSenderService
     {
