@@ -1,7 +1,7 @@
 using KinoDev.EmailService.WebApi.Models;
 using KinoDev.EmailService.WebApi.Services.Abstractions;
 using KinoDev.Shared.DtoModels.Orders;
-using KinoDev.Shared.Services;
+using KinoDev.Shared.Services.Abstractions;
 using Microsoft.Extensions.Options;
 using System.Text.Json;
 
@@ -35,29 +35,11 @@ namespace KinoDev.EmailService.WebApi.Services
                 return Task.CompletedTask;
             }
 
-            return _messageBrokerService.SubscribeAsync(
-                _messageBrokerSettings.Topics.OrderFileUrlAdded,
+            return _messageBrokerService.SubscribeAsync<OrderSummary>(
                 _messageBrokerSettings.Queues.OrderFileUrlAdded,
-                async (message) =>
+                async (orderSummary) =>
             {
-                try
-                {
-                    _logger.LogInformation("Received order completed message: {Message}", message);
-
-                    var orderData = JsonSerializer.Deserialize<OrderSummary>(message);
-                    if (!string.IsNullOrEmpty(orderData?.Email))
-                    {
-                        await _emailGenerator.GenerateOrderCompletedEmail(orderData);
-                    }
-                    else
-                    {
-                        _logger.LogError("Received order completed message without valid email: {Message}", message);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error processing order completed message: {Message}", message);
-                }
+                await _emailGenerator.GenerateOrderCompletedEmail(orderSummary);
             });
         }
     }

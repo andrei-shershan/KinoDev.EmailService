@@ -1,8 +1,9 @@
 using System.Text;
+using System.Text.Json;
 using KinoDev.EmailService.WebApi.Models;
 using KinoDev.EmailService.WebApi.Services.Abstractions;
 using KinoDev.Shared.DtoModels.Orders;
-using KinoDev.Shared.Services;
+using KinoDev.Shared.Services.Abstractions;
 using Microsoft.Extensions.Options;
 
 namespace KinoDev.EmailService.WebApi.Services
@@ -70,10 +71,15 @@ namespace KinoDev.EmailService.WebApi.Services
                     return;
                 }
 
-                await _messageBrokerService.PublishAsync(
-                    orderSummary,
-                    _messageBrokerSettings.Topics.EmailSent
+                await _messageBrokerService.SendMessageAsync(
+                    _messageBrokerSettings.Queues.EmailSent,
+                    orderSummary
                     );
+
+                // await _messageBrokerService.PublishAsync(
+                //     orderSummary,
+                //     _messageBrokerSettings.Topics.EmailSent
+                // );  
             }
             else
             {
