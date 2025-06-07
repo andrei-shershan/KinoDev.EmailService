@@ -20,7 +20,22 @@ namespace KinoDev.EmailService.WebApi
             builder.Services.AddSwaggerGen();
             builder.Services.AddSingleton<IMessageBrokerService, RabbitMQService>();
 
-            builder.Services.AddSingleton<IEmailSenderService, MailgunEmailSenderService>();
+            // TODO: Move to coinfiguration constants
+            var emailServiceName = builder.Configuration.GetValue<string>("EmailServiceName");
+            if (emailServiceName == "Mailgun")
+            {
+                builder.Services.AddScoped<IEmailSenderService, MailgunEmailSenderService>();
+            }
+            else if (emailServiceName == "Brevo")
+            {
+                builder.Services.AddHttpClient<BrevoEmailService>();
+                builder.Services.AddScoped<IEmailSenderService, BrevoEmailService>();
+            }
+            else
+            {
+                throw new ArgumentException("Invalid Email Service Name specified in configuration.");
+            }
+
             builder.Services.AddTransient<IEmailGenerator, EmailGenerator>();
 
             builder.Services.AddHostedService<MessagingSubscriber>();
@@ -46,7 +61,7 @@ namespace KinoDev.EmailService.WebApi
             app.MapControllers();
 
             app.Run();
-        }        
+        }
 
         private static void ConfigureSettings(WebApplicationBuilder builder)
         {
@@ -54,6 +69,7 @@ namespace KinoDev.EmailService.WebApi
             var messageBrokerSection = builder.Configuration.GetSection("MessageBroker");
             var azureStorageSection = builder.Configuration.GetSection("AzureStorage");
             var mailgunSection = builder.Configuration.GetSection("Mailgun");
+            var brevoSection = builder.Configuration.GetSection("Brevo");
 
             var rabbitMqSettings = rabbitMqSection.Get<RabbitMqSettings>();
             var messageBrokerSettings = messageBrokerSection.Get<MessageBrokerSettings>();
@@ -67,8 +83,15 @@ namespace KinoDev.EmailService.WebApi
                 throw new ArgumentNullException("Configuration settings are not properly configured.");
             }
 
+            if (mailgunSection == null
+            || mailgunSection == null)
+            {
+                throw new ArgumentNullException("Email service settings are not properly configured.");
+            }
+
             builder.Services.Configure<RabbitMqSettings>(rabbitMqSection);
             builder.Services.Configure<MessageBrokerSettings>(messageBrokerSection);
+            builder.Services.Configure<BrevoSettings>(brevoSection);
             builder.Services.Configure<MailgunSettings>(mailgunSection);
             builder.Services.Configure<AzureStorageSettigns>(azureStorageSection);
         }
