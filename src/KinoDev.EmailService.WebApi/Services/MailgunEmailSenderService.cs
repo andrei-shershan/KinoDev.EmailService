@@ -9,12 +9,15 @@ namespace KinoDev.EmailService.WebApi.Services
     public class MailgunEmailSenderService : IEmailSenderService
     {
         private readonly MailgunSettings _mailgunSettings;
+        private readonly IFileService _fileService;
         private readonly ILogger<MailgunEmailSenderService> _logger;
 
         public MailgunEmailSenderService(
+            IFileService fileService,
             IOptions<MailgunSettings> mailgunSettings,
             ILogger<MailgunEmailSenderService> logger)
         {
+            _fileService = fileService;
             _mailgunSettings = mailgunSettings.Value;
             _logger = logger;
         }
@@ -40,8 +43,7 @@ namespace KinoDev.EmailService.WebApi.Services
                 {
                     if (!string.IsNullOrWhiteSpace(attachmentUrl))
                     {
-                        var httpClient = new HttpClient();
-                        var pdfBytes = await httpClient.GetByteArrayAsync(attachmentUrl);
+                        var pdfBytes = await _fileService.GetFileBytesAsync(attachmentUrl);
 
                         request.AddFile("attachment", pdfBytes, attachmentUrl.Split('/').Last(), "application/pdf");
                     }
