@@ -28,15 +28,19 @@ namespace KinoDev.EmailService.WebApi
             }
             else if (emailServiceName == "Brevo")
             {
-                builder.Services.AddHttpClient<BrevoEmailService>();
-                builder.Services.AddScoped<IEmailSenderService, BrevoEmailService>();
+                builder.Services
+                    .AddScoped<IEmailSenderService, BrevoEmailService>()
+                    .AddHttpClient<BrevoEmailService>();
             }
             else
             {
                 throw new ArgumentException("Invalid Email Service Name specified in configuration.");
             }
 
-            builder.Services.AddTransient<IEmailGenerator, EmailGenerator>();
+            builder.Services.AddScoped<IEmailGenerator, EmailGenerator>();
+            builder.Services
+                .AddScoped<IFileService, FileService>()
+                .AddHttpClient<IFileService, FileService>();
 
             builder.Services.AddHostedService<MessagingSubscriber>();
 

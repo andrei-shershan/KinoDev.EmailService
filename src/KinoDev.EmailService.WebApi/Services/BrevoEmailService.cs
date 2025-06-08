@@ -19,6 +19,10 @@ public class BrevoEmailService : IEmailSenderService
     {
         _brevoSettings = brevoSettings.Value;
         _httpClient = httpClient;
+
+        _httpClient.BaseAddress = new Uri(_brevoSettings.BaseUrl);
+        _httpClient.DefaultRequestHeaders.Add("api-key", _brevoSettings.ApiKey);
+
         _logger = logger;
     }
 
@@ -37,10 +41,9 @@ public class BrevoEmailService : IEmailSenderService
                 ? GetEmailPayloadWithAttachment(to, subject, body, pdfBase64, $"{attachmentUrl?.Split('/').Last() ?? "attachment"}.pdf")
                 : GetEmailPayloaddWithoutAttachment(to, subject, body);
 
-            _httpClient.DefaultRequestHeaders.Add("api-key", _brevoSettings.ApiKey);
 
             var response = await _httpClient.PostAsync(
-                $"{_brevoSettings.BaseUrl}/smtp/email",
+                "smtp/email",
                 new StringContent(payload, Encoding.UTF8, "application/json")
             );
 
