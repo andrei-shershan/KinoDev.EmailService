@@ -95,7 +95,7 @@ namespace KinoDev.EmailService.WebApi
             var azureStorageSettings = azureStorageSection.Get<AzureStorageSettigns>();
             if (
                 messageBrokerSettings == null
-                || azureStorageSettings == null
+                && azureStorageSettings == null
             )
             {
                 throw new ArgumentNullException("Configuration settings are not properly configured.");
@@ -107,7 +107,7 @@ namespace KinoDev.EmailService.WebApi
             }
 
             if (mailgunSection == null
-            || mailgunSection == null)
+                && brevoSection == null)
             {
                 throw new ArgumentNullException("Email service settings are not properly configured.");
             }
