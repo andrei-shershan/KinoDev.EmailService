@@ -18,7 +18,20 @@ namespace KinoDev.EmailService.WebApi
             builder.Services.AddControllers();
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
-            builder.Services.AddSingleton<IMessageBrokerService, RabbitMQService>();
+
+            var messageBrokerName = builder.Configuration.GetValue<string>("MessageBrokerName");
+            if (messageBrokerName == "RabbitMQ")
+            {
+                builder.Services.AddSingleton<IMessageBrokerService, RabbitMQService>();
+            }
+            else if (messageBrokerName == "AzureServiceBus")
+            {
+                builder.Services.AddSingleton<IMessageBrokerService, AzureServiceBusService>();
+            }
+            else
+            {
+                throw new InvalidOperationException("Invalid MessageBrokerName configuration value.");
+            }
 
             // TODO: Move to coinfiguration constants
             var emailServiceName = builder.Configuration.GetValue<string>("EmailServiceName");
@@ -70,21 +83,27 @@ namespace KinoDev.EmailService.WebApi
         private static void ConfigureSettings(WebApplicationBuilder builder)
         {
             var rabbitMqSection = builder.Configuration.GetSection("RabbitMq");
+            var azureServiceBusSection = builder.Configuration.GetSection("AzureServiceBus");
             var messageBrokerSection = builder.Configuration.GetSection("MessageBroker");
             var azureStorageSection = builder.Configuration.GetSection("AzureStorage");
             var mailgunSection = builder.Configuration.GetSection("Mailgun");
             var brevoSection = builder.Configuration.GetSection("Brevo");
 
             var rabbitMqSettings = rabbitMqSection.Get<RabbitMqSettings>();
+            var azureServiceBusSettings = azureServiceBusSection.Get<AzureServiceBusSettings>();
             var messageBrokerSettings = messageBrokerSection.Get<MessageBrokerSettings>();
             var azureStorageSettings = azureStorageSection.Get<AzureStorageSettigns>();
             if (
-                rabbitMqSettings == null
-                || messageBrokerSettings == null
+                messageBrokerSettings == null
                 || azureStorageSettings == null
             )
             {
                 throw new ArgumentNullException("Configuration settings are not properly configured.");
+            }
+
+            if (rabbitMqSettings == null && azureServiceBusSettings == null)
+            {
+                throw new ArgumentNullException("RabbitMQ or Azure Service Bus settings are not properly configured.");
             }
 
             if (mailgunSection == null
@@ -94,6 +113,7 @@ namespace KinoDev.EmailService.WebApi
             }
 
             builder.Services.Configure<RabbitMqSettings>(rabbitMqSection);
+            builder.Services.Configure<AzureServiceBusSettings>(azureServiceBusSection);
             builder.Services.Configure<MessageBrokerSettings>(messageBrokerSection);
             builder.Services.Configure<BrevoSettings>(brevoSection);
             builder.Services.Configure<MailgunSettings>(mailgunSection);

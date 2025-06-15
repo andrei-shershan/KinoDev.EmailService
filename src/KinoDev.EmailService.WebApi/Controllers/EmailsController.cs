@@ -31,5 +31,12 @@ namespace KinoDev.EmailService.WebApi.Controllers
 
             return BadRequest("Failed to send email.");
         }
+
+        [HttpGet("test")]
+        public IActionResult TestEmail()
+        {
+            // This endpoint can be used to test the email service
+            return Ok("Email service is running. " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+        }
     }
 }

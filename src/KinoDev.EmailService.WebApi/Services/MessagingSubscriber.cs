@@ -38,6 +38,7 @@ namespace KinoDev.EmailService.WebApi.Services
                 _messageBrokerSettings.Queues.OrderFileUrlAdded,
                 async (orderSummary) =>
             {
+                _logger.LogInformation("Received OrderFileUrlAdded message for Order ID: {OrderId}", orderSummary.Id);
                 await _emailGenerator.GenerateOrderCompletedEmail(orderSummary);
             });
         }
