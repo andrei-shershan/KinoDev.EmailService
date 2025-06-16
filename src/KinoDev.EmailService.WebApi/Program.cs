@@ -13,6 +13,12 @@ namespace KinoDev.EmailService.WebApi
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Configure Application Insights
+            builder.Services.AddApplicationInsightsTelemetry(options =>
+            {
+                options.ConnectionString = builder.Configuration["ApplicationInsights:ConnectionString"];
+            });
+
             ConfigureSettings(builder);
 
             builder.Services.AddControllers();
