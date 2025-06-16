@@ -30,6 +30,8 @@ public class BrevoEmailService : IEmailSenderService
     {
         try
         {
+            _logger.LogInformation("Preparing to send email to {Recipient} with subject '{Subject}'", to, subject);
+
             var pdfBase64 = string.Empty;
             if (!string.IsNullOrWhiteSpace(attachmentUrl))
             {
@@ -41,11 +43,14 @@ public class BrevoEmailService : IEmailSenderService
                 ? GetEmailPayloadWithAttachment(to, subject, body, pdfBase64, $"{attachmentUrl?.Split('/').Last() ?? "attachment"}.pdf")
                 : GetEmailPayloaddWithoutAttachment(to, subject, body);
 
-
             var response = await _httpClient.PostAsync(
                 "smtp/email",
                 new StringContent(payload, Encoding.UTF8, "application/json")
             );
+
+            _logger.LogInformation("Email sent to {Recipient} with subject '{Subject}'. Status Code: {StatusCode}", to, subject, response.StatusCode);
+            var responseContent = await response.Content.ReadAsStringAsync();
+            _logger.LogDebug("Response Content: {ResponseContent}", responseContent);
 
             if (!response.IsSuccessStatusCode)
             {
