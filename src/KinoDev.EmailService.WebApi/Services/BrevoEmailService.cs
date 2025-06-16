@@ -50,7 +50,7 @@ public class BrevoEmailService : IEmailSenderService
 
             _logger.LogInformation("Email sent to {Recipient} with subject '{Subject}'. Status Code: {StatusCode}", to, subject, response.StatusCode);
             var responseContent = await response.Content.ReadAsStringAsync();
-            _logger.LogDebug("Response Content: {ResponseContent}", responseContent);
+            _logger.LogInformation("Response Content: {ResponseContent}", responseContent);
 
             if (!response.IsSuccessStatusCode)
             {
