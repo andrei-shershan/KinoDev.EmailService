@@ -62,6 +62,8 @@ namespace KinoDev.EmailService.WebApi.Services
 
             var attachmentUrl = $"{_azureStorageSettigns.BaseUrl}/{_azureStorageSettigns.StorageAccount}/{orderSummary.FileUrl}";
 
+            _logger.LogInformation("attachmentUrl: {AttachmentUrl}", attachmentUrl);
+
             var result = await _emailSenderService.SendAsync(orderSummary.Email, subject, body, attachmentUrl: attachmentUrl);
             if (result)
             {
