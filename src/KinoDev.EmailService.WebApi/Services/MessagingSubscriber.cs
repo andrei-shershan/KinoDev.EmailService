@@ -3,7 +3,6 @@ using KinoDev.EmailService.WebApi.Services.Abstractions;
 using KinoDev.Shared.DtoModels.Orders;
 using KinoDev.Shared.Services.Abstractions;
 using Microsoft.Extensions.Options;
-using System.Text.Json;
 
 namespace KinoDev.EmailService.WebApi.Services
 {

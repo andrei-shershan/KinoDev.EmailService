@@ -58,7 +58,11 @@ namespace KinoDev.EmailService.WebApi
                 .AddScoped<IFileService, FileService>()
                 .AddHttpClient<IFileService, FileService>();
 
-            builder.Services.AddHostedService<MessagingSubscriber>();
+            var useFunctionBrokerSubscription = builder.Configuration.GetValue<bool>("UseFunctionBrokerSubscription");
+            if (!useFunctionBrokerSubscription)
+            {
+                builder.Services.AddHostedService<MessagingSubscriber>();
+            }
 
             builder.Services.AddHealthChecks();
 
