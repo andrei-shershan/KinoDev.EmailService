@@ -1,5 +1,7 @@
 using KinoDev.EmailService.WebApi.Models.RequestModels;
 using KinoDev.EmailService.WebApi.Services.Abstractions;
+using KinoDev.Shared.DtoModels.Orders;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace KinoDev.EmailService.WebApi.Controllers
@@ -10,9 +12,15 @@ namespace KinoDev.EmailService.WebApi.Controllers
     {
         private readonly IEmailSenderService _emailSenderService;
 
-        public EmailsController(IEmailSenderService emailSenderService)
+        private readonly IEmailGenerator _emailGenerator;
+
+        public EmailsController(
+            IEmailSenderService emailSenderService,
+            IEmailGenerator emailGenerator
+            )
         {
             _emailSenderService = emailSenderService;
+            _emailGenerator = emailGenerator;
         }
 
         [HttpPost("send")]
@@ -30,6 +38,16 @@ namespace KinoDev.EmailService.WebApi.Controllers
             }
 
             return BadRequest("Failed to send email.");
+        }
+
+        // TODO: Add authorization
+        [AllowAnonymous]
+        [HttpPost("process-order-file-url-added")]
+        public async Task<IActionResult> ProcessOrderFileUrlAdded([FromBody] OrderSummary request)
+        {
+            await _emailGenerator.GenerateOrderCompletedEmail(request);
+
+            return Ok();
         }
 
         [HttpGet("test")]
